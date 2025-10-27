@@ -97,7 +97,7 @@ if [ ! -f ".env" ]; then
     cp CLOUD_CONFIG.env .env
     # Update server IP
     sed -i "s/CLOUD_SERVER_IP=.*/CLOUD_SERVER_IP=$SERVER_IP/g" .env
-    sed -i "s|API_BASE_URL=.*|API_BASE_URL=http://$SERVER_IP:4000/api/v1|g" .env
+    sed -i "s|API_BASE_URL=.*|API_BASE_URL=http://$SERVER_IP:3000/api/v1|g" .env
     
     # Generate secure secrets
     JWT_ACCESS_SECRET=$(openssl rand -base64 32)
