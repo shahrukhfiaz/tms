@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum ProxyProtocol {
+  HTTP
+  HTTPS
+  SOCKS5
+}
+
+enum ProxyHealthStatus {
+  UNKNOWN
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+}
+
+enum TmsSessionStatus {
+  READY
+  PENDING
+  AUTH_ERROR
+  PROXY_ERROR
+  DOWNLOADING
+  UPLOADING
+  DISABLED
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  passwordHash  String
+  role          UserRole      @default(USER)
+  status        UserStatus    @default(ACTIVE)
+  lastLoginAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  sessions      TmsSession[]  @relation("SessionAssignedUser")
+  auditLogs     AuditLog[]
+}
+
+model Proxy {
+  id             String            @id @default(cuid())
+  name           String
+  host           String
+  port           Int
+  username       String?
+  password       String?
+  protocol       ProxyProtocol     @default(HTTP)
+  healthStatus   ProxyHealthStatus @default(UNKNOWN)
+  lastCheckedAt  DateTime?
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  sessions       TmsSession[]
+}
+
+model Domain {
+  id            String       @id @default(cuid())
+  label         String
+  baseUrl       String
+  description   String?
+  isMaintenance Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      TmsSession[]
+}
+
+model TmsSession {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  status          TmsSessionStatus @default(PENDING)
+  bundleKey       String?
+  bundleChecksum  String?
+  bundleEncryption String?
+  bundleVersion   Int              @default(0)
+  lastLoginAt     DateTime?
+  lastSyncedAt    DateTime?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  proxyId         String?
+  domainId        String?
+  assignedUserId  String?
+
+  proxy           Proxy?           @relation(fields: [proxyId], references: [id])
+  domain          Domain?          @relation(fields: [domainId], references: [id])
+  assignedUser    User?            @relation("SessionAssignedUser", fields: [assignedUserId], references: [id])
+  logs            TmsSessionLog[]
+}
+
+model TmsSessionLog {
+  id         String   @id @default(cuid())
+  sessionId  String
+  level      LogLevel @default(INFO)
+  message    String
+  context    Json?
+  createdAt  DateTime @default(now())
+
+  session    TmsSession @relation(fields: [sessionId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  targetType String
+  targetId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  actor      User?    @relation(fields: [actorId], references: [id])
+}
