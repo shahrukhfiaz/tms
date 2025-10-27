@@ -1,4 +1,5 @@
-const API_BASE = 'http://157.230.51.160:3000/api/v1';
+// Dynamic API base URL - uses current server origin
+const API_BASE = window.location.origin + '/api/v1';
 let authToken = localStorage.getItem('authToken');
 let currentUser = null;
 
@@ -68,7 +69,8 @@ function updateServerTime() {
 
 async function checkServerStatus() {
     try {
-        const response = await fetch('http://157.230.51.160:3000/healthz');
+        // Use current server's health endpoint
+        const response = await fetch(window.location.origin + '/healthz');
         if (response.ok) {
             updateStatus('Server Online', '#28a745');
         } else {
