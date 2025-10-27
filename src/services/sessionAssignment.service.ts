@@ -34,7 +34,7 @@ export async function assignLatestDatSessionToUser(userId: string): Promise<DatS
  */
 async function createNewDatSession(): Promise<any> {
   // Create a new session record first
-  const newSession = await prisma.datSession.create({
+  const newSession = await prisma.tmsSession.create({
     data: {
       name: `DAT-Session-${Date.now()}`,
       status: 'PENDING',
@@ -43,7 +43,7 @@ async function createNewDatSession(): Promise<any> {
   });
 
   // Check if we have DAT credentials configured
-  if (!env.DAT_MASTER_USERNAME || !env.DAT_MASTER_PASSWORD) {
+  if (!env.TMS_MASTER_USERNAME || !env.TMS_MASTER_PASSWORD) {
     console.warn('DAT credentials not configured. Session created but not seeded.');
     return newSession;
   }
@@ -75,7 +75,7 @@ export async function getUserSessions(userId: string): Promise<DatSessionData[]>
  * Unassigns a session from a user (makes it available for others)
  */
 export async function unassignSessionFromUser(sessionId: string, userId: string): Promise<void> {
-  const session = await prisma.datSession.findUnique({
+  const session = await prisma.tmsSession.findUnique({
     where: { id: sessionId },
   });
 
@@ -87,7 +87,7 @@ export async function unassignSessionFromUser(sessionId: string, userId: string)
     throw new AppError('Session not assigned to this user', 403);
   }
 
-  await prisma.datSession.update({
+  await prisma.tmsSession.update({
     where: { id: sessionId },
     data: {
       assignedUserId: null,
@@ -100,15 +100,15 @@ export async function unassignSessionFromUser(sessionId: string, userId: string)
  * Gets statistics about session assignments
  */
 export async function getSessionAssignmentStats() {
-  const totalSessions = await prisma.datSession.count();
-  const assignedSessions = await prisma.datSession.count({
+  const totalSessions = await prisma.tmsSession.count();
+  const assignedSessions = await prisma.tmsSession.count({
     where: {
       assignedUserId: {
         not: null,
       },
     },
   });
-  const readySessions = await prisma.datSession.count({
+  const readySessions = await prisma.tmsSession.count({
     where: {
       status: 'READY',
       assignedUserId: null,

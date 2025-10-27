@@ -37,7 +37,7 @@ export async function deleteDomain(id: string): Promise<void> {
     throw new AppError('Domain not found', 404);
   }
 
-  const linkedSessions = await prisma.datSession.count({ where: { domainId: id } });
+  const linkedSessions = await prisma.tmsSession.count({ where: { domainId: id } });
   if (linkedSessions > 0) {
     throw new AppError('Domain is assigned to active sessions', 409);
   }
